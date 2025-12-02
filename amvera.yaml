@@ -1,0 +1,28 @@
+name: pbc-presentation
+displayName: "PBC - Презентация проекта"
+description: "Адаптивная презентация интернет-магазина подарков"
+tags:
+  - presentation
+  - docker
+  - nginx
+
+runtime: docker
+buildCommand: "docker build -t pbc-presentation ."
+startCommand: "docker run -p $PORT:80 pbc-presentation"
+
+envVars:
+  - name: NGINX_PORT
+    value: "80"
+
+ports:
+  - port: 80
+    protocol: http
+    public: true
+
+resources:
+  memory: "256Mi"
+  cpu: "0.5"
+
+scale:
+  minReplicas: 1
+  maxReplicas: 2
