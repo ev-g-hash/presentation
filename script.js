@@ -218,6 +218,96 @@ function initButtonHandlers() {
     });
 }
 
+// УЛУЧШЕННАЯ обработка для мобильных устройств
+function initMobileOptimizations() {
+    // Отключаем pull-to-refresh только для основного контейнера
+    let touchStartY = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            const target = e.target;
+            touchStartY = e.touches[0].clientY;
+            
+            // Разрешаем прокрутку внутри слайдов
+            if (target.closest('.slide') && target.closest('.slide').scrollHeight > target.closest('.slide').clientHeight) {
+                return;
+            }
+        }
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 1) {
+            const target = e.target;
+            const touchCurrentY = e.touches[0].clientY;
+            const slide = target.closest('.slide');
+            
+            // Если это прокрутка внутри слайда, разрешаем её
+            if (slide && slide.scrollHeight > slide.clientHeight) {
+                const slideScrollTop = slide.scrollTop;
+                const slideScrollHeight = slide.scrollHeight;
+                const slideClientHeight = slide.clientHeight;
+                
+                // Разрешаем прокрутку, если мы не на границах
+                if ((slideScrollTop > 0 && touchCurrentY > touchStartY) || 
+                    (slideScrollTop < slideScrollHeight - slideClientHeight && touchCurrentY < touchStartY)) {
+                    return;
+                }
+            }
+            
+            // Предотвращаем pull-to-refresh для основного контейнера
+            if (e.scale !== 1) { // Zoom gesture
+                e.preventDefault();
+            }
+        }
+    }, { passive: false });
+    
+    // Улучшенная обработка свайпов
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startTime = Date.now();
+        }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', function(e) {
+        if (e.changedTouches.length === 1) {
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const endTime = Date.now();
+            
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const deltaTime = endTime - startTime;
+            
+            // Проверяем, что это быстрый свайп
+            if (deltaTime < 500) {
+                const minSwipeDistance = 50;
+                const maxSwipeAngle = 30; // Максимальный угол от горизонтали
+                
+                if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaY) < Math.abs(deltaX) * Math.tan(maxSwipeAngle * Math.PI / 180)) {
+                    // Игнорируем свайпы по кнопкам навигации
+                    if (e.target.closest('.nav-btn') || e.target.closest('.indicator') || e.target.closest('.swipe-zone')) {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    
+                    if (deltaX > 0) {
+                        changeSlide(-1); // Swipe right - previous slide
+                    } else {
+                        changeSlide(1);  // Swipe left - next slide
+                    }
+                }
+            }
+        }
+    }, { passive: false });
+}
+
 // Initialize event listeners
 function initEventListeners() {
     const presentationContainer = document.querySelector('.presentation-container');
@@ -288,6 +378,9 @@ function initEventListeners() {
     
     // Initialize button handlers
     initButtonHandlers();
+    
+    // Initialize mobile optimizations
+    initMobileOptimizations();
 }
 
 // Prevent pull-to-refresh on mobile - УЛУЧШЕННАЯ
@@ -297,7 +390,7 @@ document.addEventListener('touchmove', function(e) {
     }
 }, { passive: false });
 
-// Разрешаем прокрутку внутри слайдов
+// Разрешаем прокрутку внутри слайдов - УЛУЧШЕННАЯ
 document.addEventListener('touchstart', function(e) {
     if (e.touches.length === 1) {
         const target = e.target;
