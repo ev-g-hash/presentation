@@ -1,6 +1,6 @@
 // static/js/presentation.js
 let currentSlide = 1;
-const totalSlides = 7;
+const totalSlides = 8;
 
 // Touch variables
 let touchStartX = 0;
