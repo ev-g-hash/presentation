@@ -410,32 +410,32 @@
 
     <!-- Навигация -->
     <div class="presentation-nav">
-        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)" type="button">
+        <button class="nav-btn" id="prevBtn" type="button" aria-label="Предыдущий слайд">
             <i class="bi bi-chevron-left"></i>
         </button>
         <div class="slide-counter">
             <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
         </div>
-        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)" type="button">
+        <button class="nav-btn" id="nextBtn" type="button" aria-label="Следующий слайд">
             <i class="bi bi-chevron-right"></i>
         </button>
     </div>
 
     <!-- Индикаторы слайдов -->
     <div class="slide-indicators">
-        <button class="indicator active" onclick="goToSlide(1)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(2)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(3)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(4)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(5)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(6)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(7)" type="button"></button>
-        <button class="indicator" onclick="goToSlide(8)" type="button"></button>
+        <button class="indicator active" onclick="goToSlide(1)" type="button" aria-label="Перейти к слайду 1"></button>
+        <button class="indicator" onclick="goToSlide(2)" type="button" aria-label="Перейти к слайду 2"></button>
+        <button class="indicator" onclick="goToSlide(3)" type="button" aria-label="Перейти к слайду 3"></button>
+        <button class="indicator" onclick="goToSlide(4)" type="button" aria-label="Перейти к слайду 4"></button>
+        <button class="indicator" onclick="goToSlide(5)" type="button" aria-label="Перейти к слайду 5"></button>
+        <button class="indicator" onclick="goToSlide(6)" type="button" aria-label="Перейти к слайду 6"></button>
+        <button class="indicator" onclick="goToSlide(7)" type="button" aria-label="Перейти к слайду 7"></button>
+        <button class="indicator" onclick="goToSlide(8)" type="button" aria-label="Перейти к слайду 8"></button>
     </div>
 
-    <!-- Swipe zones for mobile -->
-    <div class="swipe-zone swipe-zone-left" onclick="changeSlide(-1)"></div>
-    <div class="swipe-zone swipe-zone-right" onclick="changeSlide(1)"></div>
+    <!-- Swipe зоны для мобильных устройств -->
+    <div class="swipe-zone swipe-zone-left" aria-label="Предыдущий слайд"></div>
+    <div class="swipe-zone swipe-zone-right" aria-label="Следующий слайд"></div>
 
     <script src="script.js"></script>
 </body>

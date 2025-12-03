@@ -1,463 +1,278 @@
-// static/js/presentation.js
-let currentSlide = 1;
-const totalSlides = 8;
-
-// Touch variables
-let touchStartX = 0;
-let touchEndX = 0;
-let touchStartY = 0;
-let touchEndY = 0;
-
-function showSlide(n) {
+// Инициализация презентации
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы презентации
     const slides = document.querySelectorAll('.slide');
     const indicators = document.querySelectorAll('.indicator');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const currentSlideSpan = document.getElementById('currentSlide');
+    const totalSlidesSpan = document.getElementById('totalSlides');
+    const swipeZones = document.querySelectorAll('.swipe-zone');
     
-    if (n > totalSlides) currentSlide = 1;
-    if (n < 1) currentSlide = totalSlides;
+    // Состояние презентации
+    let currentSlide = 1;
+    const totalSlides = slides.length;
     
-    slides.forEach(slide => {
-        slide.classList.remove('active');
-    });
+    // Инициализация
+    updateSlideCounter();
+    updateNavigationButtons();
     
-    indicators.forEach(indicator => {
-        indicator.classList.remove('active');
-    });
-    
-    document.getElementById(`slide${currentSlide}`).classList.add('active');
-    indicators[currentSlide - 1].classList.add('active');
-    
-    document.getElementById('currentSlide').textContent = currentSlide;
-    
-    // Обновляем состояние кнопок навигации
-    document.getElementById('prevBtn').disabled = currentSlide === 1;
-    document.getElementById('nextBtn').disabled = currentSlide === totalSlides;
-    
-    // Прокручиваем к началу слайда при смене
-    const activeSlide = document.getElementById(`slide${currentSlide}`);
-    if (activeSlide) {
-        activeSlide.scrollTop = 0;
-    }
-}
-
-function changeSlide(direction) {
-    currentSlide += direction;
-    showSlide(currentSlide);
-    
-    // Добавляем haptic feedback для мобильных устройств
-    if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-    }
-}
-
-function goToSlide(slideNumber) {
-    currentSlide = slideNumber;
-    showSlide(currentSlide);
-    
-    // Добавляем haptic feedback для мобильных устройств
-    if ('vibrate' in navigator) {
-        navigator.vibrate(30);
-    }
-}
-
-// Touch/swipe handling
-function handleTouchStart(e) {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-}
-
-function handleTouchMove(e) {
-    // Не предотвращаем прокрутку внутри слайдов
-    const target = e.target;
-    if (target.closest('.slide') && target.closest('.slide').scrollHeight > target.closest('.slide').clientHeight) {
-        // Разрешаем прокрутку если контент больше высоты
-        return;
-    }
-    e.preventDefault();
-}
-
-function handleTouchEnd(e) {
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    const minSwipeDistance = 50;
-    
-    // Проверяем что это именно свайп, а не прокрутка
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-        if (deltaX > 0) {
-            // Swipe right - go to previous slide
-            changeSlide(-1);
-        } else {
-            // Swipe left - go to next slide
-            changeSlide(1);
+    // Функция смены слайда
+    function changeSlide(direction) {
+        const newSlide = currentSlide + direction;
+        
+        if (newSlide >= 1 && newSlide <= totalSlides) {
+            showSlide(newSlide);
         }
     }
-}
-
-// Keyboard navigation
-document.addEventListener('keydown', function(event) {
-    switch(event.key) {
-        case 'ArrowLeft':
-            changeSlide(-1);
-            break;
-        case 'ArrowRight':
-            changeSlide(1);
-            break;
-        case 'Home':
-            goToSlide(1);
-            break;
-        case 'End':
-            goToSlide(totalSlides);
-            break;
-        case 'Escape':
-            // Exit fullscreen if active
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            break;
-    }
-});
-
-// Double tap to toggle fullscreen on mobile
-let lastTapTime = 0;
-function handleDoubleTap() {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTapTime;
     
-    if (tapLength < 500 && tapLength > 0) {
-        // Double tap detected
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        } else {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log('Error attempting to enable fullscreen:', err);
+    // Показать конкретный слайд
+    function showSlide(slideNumber) {
+        // Убрать активный класс со всех слайдов и индикаторов
+        slides.forEach(slide => slide.classList.remove('active'));
+        indicators.forEach(indicator => indicator.classList.remove('active'));
+        
+        // Добавить активный класс к нужному слайду и индикатору
+        const targetSlide = document.getElementById(`slide${slideNumber}`);
+        const targetIndicator = indicators[slideNumber - 1];
+        
+        if (targetSlide && targetIndicator) {
+            targetSlide.classList.add('active');
+            targetIndicator.classList.add('active');
+            
+            currentSlide = slideNumber;
+            updateSlideCounter();
+            updateNavigationButtons();
+            
+            // Прокрутить к началу контента слайда
+            const slideContent = targetSlide.querySelector('.slide-content');
+            if (slideContent) {
+                slideContent.scrollTop = 0;
+            }
+        }
+    }
+    
+    // Перейти к конкретному слайду
+    function goToSlide(slideNumber) {
+        showSlide(slideNumber);
+    }
+    
+    // Обновить счетчик слайдов
+    function updateSlideCounter() {
+        if (currentSlideSpan) currentSlideSpan.textContent = currentSlide;
+        if (totalSlidesSpan) totalSlidesSpan.textContent = totalSlides;
+    }
+    
+    // Обновить состояние кнопок навигации
+    function updateNavigationButtons() {
+        if (prevBtn) {
+            prevBtn.disabled = currentSlide === 1;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = currentSlide === totalSlides;
+        }
+    }
+    
+    // Обработчики событий для кнопок навигации
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => changeSlide(-1));
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => changeSlide(1));
+    }
+    
+    // Обработчики для индикаторов
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => goToSlide(index + 1));
+    });
+    
+    // Обработчики для swipe зон
+    swipeZones.forEach(zone => {
+        zone.addEventListener('click', function() {
+            if (this.classList.contains('swipe-zone-left')) {
+                changeSlide(-1);
+            } else if (this.classList.contains('swipe-zone-right')) {
+                changeSlide(1);
+            }
+        });
+    });
+    
+    // Обработка клавиатуры
+    document.addEventListener('keydown', function(event) {
+        switch(event.key) {
+            case 'ArrowLeft':
+            case 'ArrowUp':
+                event.preventDefault();
+                changeSlide(-1);
+                break;
+            case 'ArrowRight':
+            case 'ArrowDown':
+            case ' ':
+                event.preventDefault();
+                changeSlide(1);
+                break;
+            case 'Home':
+                event.preventDefault();
+                showSlide(1);
+                break;
+            case 'End':
+                event.preventDefault();
+                showSlide(totalSlides);
+                break;
+        }
+    });
+    
+    // Обработка касаний для мобильных устройств
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    
+    document.addEventListener('touchstart', function(event) {
+        touchStartX = event.changedTouches[0].screenX;
+        touchStartY = event.changedTouches[0].screenY;
+    }, { passive: true });
+    
+    document.addEventListener('touchend', function(event) {
+        touchEndX = event.changedTouches[0].screenX;
+        touchEndY = event.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const minSwipeDistance = 50;
+        
+        // Проверяем, что это горизонтальный свайп, а не вертикальный
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+            if (deltaX > 0) {
+                // Свайп вправо - предыдущий слайд
+                changeSlide(-1);
+            } else {
+                // Свайп влево - следующий слайд
+                changeSlide(1);
+            }
+        }
+    }
+    
+    // Автопрокрутка (опционально, можно отключить)
+    let autoScrollInterval;
+    
+    function startAutoScroll() {
+        autoScrollInterval = setInterval(() => {
+            if (currentSlide < totalSlides) {
+                changeSlide(1);
+            } else {
+                showSlide(1); // Зацикливаем
+            }
+        }, 10000); // 10 секунд
+    }
+    
+    function stopAutoScroll() {
+        if (autoScrollInterval) {
+            clearInterval(autoScrollInterval);
+        }
+    }
+    
+    // Останавливаем автопрокрутку при взаимодействии
+    document.addEventListener('click', stopAutoScroll);
+    document.addEventListener('keydown', stopAutoScroll);
+    document.addEventListener('touchstart', stopAutoScroll);
+    
+    // Раскомментировать для включения автопрокрутки
+    // startAutoScroll();
+    
+    // Обработка изменения размера окна
+    window.addEventListener('resize', function() {
+        // При изменении размера убеждаемся, что текущий слайд корректно отображается
+        const activeSlide = document.querySelector('.slide.active');
+        if (activeSlide) {
+            const slideContent = activeSlide.querySelector('.slide-content');
+            if (slideContent) {
+                slideContent.scrollTop = 0;
+            }
+        }
+    });
+    
+    // Предотвращение контекстного меню на swipe зонах (для лучшего UX на мобильных)
+    swipeZones.forEach(zone => {
+        zone.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+    });
+    
+    // Добавляем визуальную обратную связь для кнопок
+    function addButtonFeedback() {
+        const buttons = document.querySelectorAll('button, .nav-btn, .indicator, .project-link-btn, .bonus-link-btn');
+        
+        buttons.forEach(button => {
+            button.addEventListener('mousedown', function() {
+                this.style.transform = this.style.transform + ' scale(0.95)';
+            });
+            
+            button.addEventListener('mouseup', function() {
+                this.style.transform = this.style.transform.replace(' scale(0.95)', '');
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = this.style.transform.replace(' scale(0.95)', '');
+            });
+        });
+    }
+    
+    addButtonFeedback();
+    
+    // Функция для плавного появления элементов при загрузке
+    function animateSlideContent() {
+        const activeSlide = document.querySelector('.slide.active');
+        if (activeSlide) {
+            const elements = activeSlide.querySelectorAll('.app-card, .model-card, .function-card, .tech-item, .feature-item, .stat-item');
+            elements.forEach((element, index) => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, index * 100);
             });
         }
     }
-    lastTapTime = currentTime;
-}
-
-// Prevent context menu on long press (mobile)
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
+    
+    // Запускаем анимацию для первого слайда
+    setTimeout(animateSlideContent, 100);
+    
+    // Обновляем анимацию при смене слайда
+    const originalShowSlide = showSlide;
+    showSlide = function(slideNumber) {
+        originalShowSlide(slideNumber);
+        setTimeout(animateSlideContent, 100);
+    };
+    
+    console.log('🎉 Презентация "Подарок в большом городе" загружена!');
+    console.log('📱 Поддерживается навигация: кнопки, индикаторы, клавиатура, свайпы');
+    console.log('🎯 Горячие клавиши: ← → ↑ ↓ Space, Home, End');
 });
 
-// УЛУЧШЕННАЯ обработка кнопок для мобильных
-function initButtonHandlers() {
-    const buttons = document.querySelectorAll('.nav-btn, .indicator');
-    
-    buttons.forEach(button => {
-        // Удаляем старые обработчики
-        button.removeEventListener('touchstart', button._touchStartHandler);
-        button.removeEventListener('touchend', button._touchEndHandler);
-        button.removeEventListener('touchcancel', button._touchCancelHandler);
-        
-        // Создаем новые обработчики
-        button._touchStartHandler = function(e) {
-            // Предотвращаем всплытие события
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Добавляем визуальный feedback
-            this.style.transform = 'scale(0.95)';
-            this.style.background = '#f0f0f0';
-        };
-        
-        button._touchEndHandler = function(e) {
-            // Предотвращаем всплытие события
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Возвращаем нормальный вид
-            this.style.transform = '';
-            this.style.background = '';
-            
-            // Выполняем действие после небольшой задержки
-            setTimeout(() => {
-                if (this.onclick) {
-                    this.onclick();
-                }
-            }, 10);
-        };
-        
-        button._touchCancelHandler = function(e) {
-            // Предотвращаем всплытие события
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Возвращаем нормальный вид
-            this.style.transform = '';
-            this.style.background = '';
-        };
-        
-        // Добавляем новые обработчики
-        button.addEventListener('touchstart', button._touchStartHandler, { passive: false });
-        button.addEventListener('touchend', button._touchEndHandler, { passive: false });
-        button.addEventListener('touchcancel', button._touchCancelHandler, { passive: false });
-        
-        // Добавляем visual feedback для mouse events
-        button.addEventListener('mousedown', function(e) {
-            if (e.button === 0) { // Left mouse button
-                this.style.transform = 'scale(0.95)';
-                this.style.background = '#f0f0f0';
-            }
-        });
-        
-        button.addEventListener('mouseup', function(e) {
-            if (e.button === 0) { // Left mouse button
-                this.style.transform = '';
-                this.style.background = '';
-            }
-        });
-        
-        button.addEventListener('mouseleave', function(e) {
-            this.style.transform = '';
-            this.style.background = '';
-        });
-    });
-}
-
-// УЛУЧШЕННАЯ обработка для мобильных устройств
-function initMobileOptimizations() {
-    // Отключаем pull-to-refresh только для основного контейнера
-    let touchStartY = 0;
-    
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 1) {
-            const target = e.target;
-            touchStartY = e.touches[0].clientY;
-            
-            // Разрешаем прокрутку внутри слайдов
-            if (target.closest('.slide') && target.closest('.slide').scrollHeight > target.closest('.slide').clientHeight) {
-                return;
-            }
+// Дополнительные утилиты
+window.presentationUtils = {
+    // Функция для программного перехода к слайду
+    goToSlide: function(slideNumber) {
+        if (typeof goToSlide === 'function') {
+            goToSlide(slideNumber);
         }
-    }, { passive: true });
+    },
     
-    document.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 1) {
-            const target = e.target;
-            const touchCurrentY = e.touches[0].clientY;
-            const slide = target.closest('.slide');
-            
-            // Если это прокрутка внутри слайда, разрешаем её
-            if (slide && slide.scrollHeight > slide.clientHeight) {
-                const slideScrollTop = slide.scrollTop;
-                const slideScrollHeight = slide.scrollHeight;
-                const slideClientHeight = slide.clientHeight;
-                
-                // Разрешаем прокрутку, если мы не на границах
-                if ((slideScrollTop > 0 && touchCurrentY > touchStartY) || 
-                    (slideScrollTop < slideScrollHeight - slideClientHeight && touchCurrentY < touchStartY)) {
-                    return;
-                }
-            }
-            
-            // Предотвращаем pull-to-refresh для основного контейнера
-            if (e.scale !== 1) { // Zoom gesture
-                e.preventDefault();
-            }
-        }
-    }, { passive: false });
+    // Функция для получения текущего слайда
+    getCurrentSlide: function() {
+        return currentSlide || 1;
+    },
     
-    // Улучшенная обработка свайпов
-    let startX = 0;
-    let startY = 0;
-    let startTime = 0;
-    
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 1) {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            startTime = Date.now();
-        }
-    }, { passive: true });
-    
-    document.addEventListener('touchend', function(e) {
-        if (e.changedTouches.length === 1) {
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            const endTime = Date.now();
-            
-            const deltaX = endX - startX;
-            const deltaY = endY - startY;
-            const deltaTime = endTime - startTime;
-            
-            // Проверяем, что это быстрый свайп
-            if (deltaTime < 500) {
-                const minSwipeDistance = 50;
-                const maxSwipeAngle = 30; // Максимальный угол от горизонтали
-                
-                if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaY) < Math.abs(deltaX) * Math.tan(maxSwipeAngle * Math.PI / 180)) {
-                    // Игнорируем свайпы по кнопкам навигации
-                    if (e.target.closest('.nav-btn') || e.target.closest('.indicator') || e.target.closest('.swipe-zone')) {
-                        return;
-                    }
-                    
-                    e.preventDefault();
-                    
-                    if (deltaX > 0) {
-                        changeSlide(-1); // Swipe right - previous slide
-                    } else {
-                        changeSlide(1);  // Swipe left - next slide
-                    }
-                }
-            }
-        }
-    }, { passive: false });
-}
-
-// Initialize event listeners
-function initEventListeners() {
-    const presentationContainer = document.querySelector('.presentation-container');
-    
-    // Touch events
-    presentationContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-    presentationContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
-    presentationContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
-    
-    // Double tap for fullscreen
-    presentationContainer.addEventListener('touchend', handleDoubleTap, { passive: true });
-    
-    // Mouse swipe for desktop
-    let isMouseDown = false;
-    let mouseStartX = 0;
-    
-    presentationContainer.addEventListener('mousedown', (e) => {
-        // Игнорируем клики по кнопкам навигации
-        if (e.target.closest('.nav-btn') || e.target.closest('.indicator')) {
-            return;
-        }
-        
-        isMouseDown = true;
-        mouseStartX = e.clientX;
-    });
-    
-    presentationContainer.addEventListener('mousemove', (e) => {
-        if (isMouseDown) {
-            e.preventDefault();
-        }
-    });
-    
-    presentationContainer.addEventListener('mouseup', (e) => {
-        if (isMouseDown) {
-            const deltaX = e.clientX - mouseStartX;
-            if (Math.abs(deltaX) > 50) {
-                if (deltaX > 0) {
-                    changeSlide(-1);
-                } else {
-                    changeSlide(1);
-                }
-            }
-            isMouseDown = false;
-        }
-    });
-    
-    // Handle fullscreen changes
-    document.addEventListener('fullscreenchange', function() {
-        if (document.fullscreenElement) {
-            document.body.classList.add('fullscreen');
-        } else {
-            document.body.classList.remove('fullscreen');
-        }
-    });
-    
-    // Handle resize events
-    window.addEventListener('resize', function() {
-        // Recalculate positions if needed
-        showSlide(currentSlide);
-    });
-    
-    // Handle orientation change
-    window.addEventListener('orientationchange', function() {
-        setTimeout(() => {
-            showSlide(currentSlide);
-        }, 500); // Wait for orientation change to complete
-    });
-    
-    // Initialize button handlers
-    initButtonHandlers();
-    
-    // Initialize mobile optimizations
-    initMobileOptimizations();
-}
-
-// Prevent pull-to-refresh on mobile - УЛУЧШЕННАЯ
-document.addEventListener('touchmove', function(e) {
-    if (e.touches.length > 1) {
-        e.preventDefault(); // Prevent zoom
+    // Функция для получения общего количества слайдов
+    getTotalSlides: function() {
+        return totalSlides || 8;
     }
-}, { passive: false });
-
-// Разрешаем прокрутку внутри слайдов - УЛУЧШЕННАЯ
-document.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 1) {
-        const target = e.target;
-        // Разрешаем touch для элементов внутри слайдов
-        if (target.closest('.slide') && target.closest('.slide').scrollHeight > target.closest('.slide').clientHeight) {
-            // Разрешаем прокрутку если контент больше высоты
-            return;
-        }
-        // Предотвращаем pull-to-refresh только для основного контейнера
-        if (!target.closest('.presentation-container')) {
-            e.preventDefault();
-        }
-    }
-}, { passive: false });
-
-document.addEventListener('touchend', function(e) {
-    if (e.touches.length === 0) {
-        const target = e.changedTouches[0].target;
-        // Разрешаем touch для элементов внутри слайдов
-        if (target.closest('.slide') && target.closest('.slide').scrollHeight > target.closest('.slide').clientHeight) {
-            // Разрешаем прокрутку если контент больше высоты
-            return;
-        }
-        // Предотвращаем pull-to-refresh только для основного контейнера
-        if (!target.closest('.presentation-container')) {
-            e.preventDefault();
-        }
-    }
-}, { passive: false });
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    showSlide(currentSlide);
-    initEventListeners();
-    
-    // Add loading complete class for animations
-    setTimeout(() => {
-        document.body.classList.add('loaded');
-    }, 100);
-    
-    // Auto hide mobile navigation after inactivity (optional)
-    let navTimeout;
-    function showNavigation() {
-        const nav = document.querySelector('.presentation-nav');
-        const indicators = document.querySelector('.slide-indicators');
-        
-        if (nav) nav.style.opacity = '1';
-        if (indicators) indicators.style.opacity = '1';
-        
-        clearTimeout(navTimeout);
-        navTimeout = setTimeout(() => {
-            if (nav) nav.style.opacity = '0.7';
-            if (indicators) indicators.style.opacity = '0.7';
-        }, 3000);
-    }
-    
-    // Show navigation on interaction
-    document.addEventListener('click', showNavigation);
-    document.addEventListener('touchstart', showNavigation);
-    showNavigation();
-});
-
-// Optional: Automatic slide advancement (commented out by default)
-// setInterval(() => {
-//     if (currentSlide < totalSlides) {
-//         changeSlide(1);
-//     } else {
-//         goToSlide(1);
-//     }
-// }, 15000); // every 15 seconds
+};
