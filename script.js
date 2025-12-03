@@ -181,9 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', stopAutoScroll);
     document.addEventListener('touchstart', stopAutoScroll);
     
-    // Раскомментировать для включения автопрокрутки
-    // startAutoScroll();
-    
     // Обработка изменения размера окна
     window.addEventListener('resize', function() {
         // При изменении размера убеждаемся, что текущий слайд корректно отображается
@@ -201,6 +198,14 @@ document.addEventListener('DOMContentLoaded', function() {
         zone.addEventListener('contextmenu', function(event) {
             event.preventDefault();
         });
+    });
+
+    // Дополнительная обработка для предотвращения перекрытия ссылок
+    document.addEventListener('click', function(event) {
+        // Если кликнули по ссылке в бонусных проектах, не даем свайп-зонам перехватить событие
+        if (event.target.closest('.inline-project-link, .project-link-btn, .bonus-link-btn')) {
+            event.stopPropagation();
+        }
     });
     
     // Добавляем визуальную обратную связь для кнопок
